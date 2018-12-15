@@ -1,5 +1,12 @@
 package main
 
+import (
+	"log"
+)
+
 func main() {
-	example()
+	err := example()
+	if err != nil {
+		log.Fatalf("%#v", err)
+	}
 }
