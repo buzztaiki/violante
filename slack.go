@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 
 	"github.com/williballenthin/govt"
-	"io/ioutil"
 )
 
 type slackAttachment struct {
@@ -41,6 +41,7 @@ func (n *slackNotifier) send(a slackAttachment) error {
 	if err != nil {
 		return err
 	}
+
 	if resp.StatusCode < 200 || resp.StatusCode >= 400 {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
@@ -50,11 +51,9 @@ func (n *slackNotifier) send(a slackAttachment) error {
 		return fmt.Errorf("failed to send to slack %s (%s)", resp.Status, body)
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
-	log.Printf("body %s", body)
 
 	return nil
 }
