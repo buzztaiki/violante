@@ -61,7 +61,7 @@ func (n *SlackNotifier) send(a slackAttachment) error {
 
 // SendReport ...
 func (n *SlackNotifier) SendReport(file string, fr *govt.FileReport) error {
-	if fr.ScanId == "" || fr.Positives == 0 {
+	if fr.Positives == 0 {
 		return nil
 	}
 

@@ -8,6 +8,16 @@ import (
 	"time"
 
 	"github.com/williballenthin/govt"
+	"strings"
+)
+
+const (
+	// The requested resource is not among the finished, queued or pending scans
+	responseCodeNotFound = 0
+	// Your resource is queued for analysis
+	responseCodeQueued = -2
+	// Scan finished, information embedded
+	responseCodeSuccess = 1
 )
 
 // Detector ...
@@ -53,6 +63,13 @@ func (d *Detector) collectReports() ([]report, error) {
 	hmap, hashes := d.collectHashes(files)
 	reports, err := d.getFileReports(hashes)
 	if err != nil {
+		if strings.Contains(err.Error(), "No Content") {
+			log.Printf("rate limit exceeded, requeue all")
+			for _, f := range files {
+				d.Put(f)
+			}
+			return nil, nil
+		}
 		return nil, err
 	}
 	return d.convertReports(hmap, reports), nil
@@ -102,16 +119,22 @@ func (d *Detector) convertReports(hmap map[string]string, reports []govt.FileRep
 			log.Printf("%s: not found", r.Resource)
 			continue
 		}
-
-		if r.ScanId == "" {
-			log.Printf("%s: %d %s", f, r.Status.ResponseCode, r.Status.VerboseMsg)
-			continue
-		}
-
 		rs = append(rs, report{file: f, r: &r})
 	}
 
 	return rs
+}
+
+func (d *Detector) scanAndPut(file string) error {
+	r, err := d.client.ScanFile(file)
+	if err != nil {
+		return err
+	}
+	if r.ResponseCode != responseCodeSuccess {
+		return fmt.Errorf("%s: %d %s", file, r.ResponseCode, r.VerboseMsg)
+	}
+	d.Put(file)
+	return nil
 }
 
 func (d *Detector) detect() {
@@ -120,7 +143,28 @@ func (d *Detector) detect() {
 		log.Print(err)
 	}
 
+	succeeded := make([]report, 0, len(rs))
 	for _, r := range rs {
+		switch r.r.ResponseCode {
+		case responseCodeSuccess:
+			log.Printf("%s is succeeded to report", r.file)
+			succeeded = append(succeeded, r)
+		case responseCodeQueued:
+			log.Printf("%s is not yet processed, requeue", r.file)
+			d.Put(r.file)
+		case responseCodeNotFound:
+			log.Printf("%s is scheduled to scan", r.file)
+			go func() {
+				if err := d.scanAndPut(r.file); err != nil {
+					log.Printf("scan failed %s", err)
+				}
+			}()
+		default:
+			log.Printf("%s: %d %s", r.file, r.r.Status.ResponseCode, r.r.Status.VerboseMsg)
+		}
+	}
+
+	for _, r := range succeeded {
 		d.notifier.SendReport(r.file, r.r)
 	}
 }
