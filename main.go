@@ -28,7 +28,7 @@ func main() {
 	for scanner.Scan() {
 		s := scanner.Text()
 		if s != "" {
-			det.Put(s)
+			det.Add(s)
 		}
 	}
 

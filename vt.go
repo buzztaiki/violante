@@ -43,8 +43,8 @@ func (d *Detector) Start(ctx context.Context) {
 	go d.loop(ctx, time.NewTicker(time.Minute/4))
 }
 
-// Put ...
-func (d *Detector) Put(file string) {
+// Add ...
+func (d *Detector) Add(file string) {
 	d.remainsMux.Lock()
 	defer d.remainsMux.Unlock()
 	d.remains = append(d.remains, file)
@@ -66,7 +66,7 @@ func (d *Detector) collectReports() ([]report, error) {
 		if strings.Contains(err.Error(), "No Content") {
 			log.Printf("rate limit exceeded, requeue all")
 			for _, f := range files {
-				d.Put(f)
+				d.Add(f)
 			}
 			return nil, nil
 		}
@@ -133,7 +133,7 @@ func (d *Detector) scanAndPut(file string) error {
 	if r.ResponseCode != responseCodeSuccess {
 		return fmt.Errorf("%s: %d %s", file, r.ResponseCode, r.VerboseMsg)
 	}
-	d.Put(file)
+	d.Add(file)
 	return nil
 }
 
@@ -151,7 +151,7 @@ func (d *Detector) detect() {
 			succeeded = append(succeeded, r)
 		case responseCodeQueued:
 			log.Printf("%s is not yet processed, requeue", r.file)
-			d.Put(r.file)
+			d.Add(r.file)
 		case responseCodeNotFound:
 			log.Printf("%s is scheduled to scan", r.file)
 			r := r // create new r
