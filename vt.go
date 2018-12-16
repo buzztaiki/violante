@@ -1,17 +1,17 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"sync"
-
-	"context"
 	"time"
 
 	"github.com/williballenthin/govt"
 )
 
-type detector struct {
+// Detector ...
+type Detector struct {
 	client     *govt.Client
 	notifier   Notifier
 	remains    []string
@@ -23,21 +23,24 @@ type report struct {
 	r    *govt.FileReport
 }
 
-func newDetector(client *govt.Client, notifier Notifier) *detector {
-	return &detector{client: client, notifier: notifier}
+// NewDetector ...
+func NewDetector(client *govt.Client, notifier Notifier) *Detector {
+	return &Detector{client: client, notifier: notifier}
 }
 
-func (d *detector) start(ctx context.Context) {
+// Start ...
+func (d *Detector) Start(ctx context.Context) {
 	go d.loop(ctx, time.NewTicker(time.Minute/4))
 }
 
-func (d *detector) put(file string) {
+// Put ...
+func (d *Detector) Put(file string) {
 	d.remainsMux.Lock()
 	defer d.remainsMux.Unlock()
 	d.remains = append(d.remains, file)
 }
 
-func (d *detector) drainAll() []string {
+func (d *Detector) drainAll() []string {
 	d.remainsMux.Lock()
 	defer d.remainsMux.Unlock()
 	rs := d.remains
@@ -45,7 +48,7 @@ func (d *detector) drainAll() []string {
 	return rs
 }
 
-func (d *detector) collectReports() ([]report, error) {
+func (d *Detector) collectReports() ([]report, error) {
 	files := d.drainAll()
 	hmap, hashes := d.collectHashes(files)
 	reports, err := d.getFileReports(hashes)
@@ -55,8 +58,8 @@ func (d *detector) collectReports() ([]report, error) {
 	return d.convertReports(hmap, reports), nil
 }
 
-func (d *detector) collectHashes(files []string) (hmap map[string]string, hashes []string) {
-	hmap = map[string]string{}
+func (d *Detector) collectHashes(files []string) (hmap map[string]string, hashes []string) {
+	hmap = make(map[string]string, len(files))
 	hashes = make([]string, 0, len(files))
 
 	for _, f := range files {
@@ -71,7 +74,7 @@ func (d *detector) collectHashes(files []string) (hmap map[string]string, hashes
 	return hmap, hashes
 }
 
-func (d *detector) getFileReports(hashes []string) ([]govt.FileReport, error) {
+func (d *Detector) getFileReports(hashes []string) ([]govt.FileReport, error) {
 	switch len(hashes) {
 	case 0:
 		return nil, nil
@@ -91,7 +94,7 @@ func (d *detector) getFileReports(hashes []string) ([]govt.FileReport, error) {
 		return *r, nil
 	}
 }
-func (d *detector) convertReports(hmap map[string]string, reports []govt.FileReport) []report {
+func (d *Detector) convertReports(hmap map[string]string, reports []govt.FileReport) []report {
 	rs := make([]report, 0, len(hmap))
 	for _, r := range reports {
 		f, ok := hmap[r.Resource]
@@ -111,7 +114,7 @@ func (d *detector) convertReports(hmap map[string]string, reports []govt.FileRep
 	return rs
 }
 
-func (d *detector) detect() {
+func (d *Detector) detect() {
 	rs, err := d.collectReports()
 	if err != nil {
 		log.Print(err)
@@ -122,10 +125,11 @@ func (d *detector) detect() {
 	}
 }
 
-func (d *detector) loop(ctx context.Context, ticker *time.Ticker) {
+func (d *Detector) loop(ctx context.Context, ticker *time.Ticker) {
 	for {
 		select {
 		case <-ctx.Done():
+			ticker.Stop()
 			return
 		case <-ticker.C:
 			log.Print("start detection...")

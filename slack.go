@@ -23,12 +23,13 @@ type slackMessage struct {
 	Attachments []slackAttachment `json:"attachments"`
 }
 
-type slackNotifier struct {
+// SlackNotifier ...
+type SlackNotifier struct {
 	webhookURL string
 	channel    string
 }
 
-func (n *slackNotifier) send(a slackAttachment) error {
+func (n *SlackNotifier) send(a slackAttachment) error {
 	payload, err := json.Marshal(slackMessage{
 		Channel:     n.channel,
 		Attachments: []slackAttachment{a},
@@ -58,7 +59,8 @@ func (n *slackNotifier) send(a slackAttachment) error {
 	return nil
 }
 
-func (n *slackNotifier) SendReport(file string, fr *govt.FileReport) error {
+// SendReport ...
+func (n *SlackNotifier) SendReport(file string, fr *govt.FileReport) error {
 	if fr.ScanId == "" || fr.Positives == 0 {
 		return nil
 	}

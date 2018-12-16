@@ -19,16 +19,16 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	notifier := &slackNotifier{os.Getenv("SLACK_WEBHOOK_URL"), os.Getenv("SLACK_CHANNEL")}
+	notifier := &SlackNotifier{os.Getenv("SLACK_WEBHOOK_URL"), os.Getenv("SLACK_CHANNEL")}
 
-	det := newDetector(client, notifier)
-	det.start(ctx)
+	det := NewDetector(client, notifier)
+	det.Start(ctx)
 
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		s := scanner.Text()
 		if s != "" {
-			det.put(s)
+			det.Put(s)
 		}
 	}
 
