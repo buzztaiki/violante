@@ -154,6 +154,7 @@ func (d *Detector) detect() {
 			d.Put(r.file)
 		case responseCodeNotFound:
 			log.Printf("%s is scheduled to scan", r.file)
+			r := r // create new r
 			go func() {
 				if err := d.scanAndPut(r.file); err != nil {
 					log.Printf("scan failed %s", err)
