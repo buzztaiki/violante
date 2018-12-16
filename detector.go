@@ -190,10 +190,3 @@ func (d *Detector) detect() {
 		d.notifier.SendReport(r.file, r.r)
 	}
 }
-
-func (d *Detector) loop(ticker *time.Ticker) {
-	for range ticker.C {
-		log.Print("start detection...")
-		d.detect()
-	}
-}
