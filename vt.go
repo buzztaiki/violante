@@ -96,14 +96,12 @@ func (d *Detector) getFileReports(hashes []string) ([]govt.FileReport, error) {
 	case 0:
 		return nil, nil
 	case 1:
-		log.Printf("1")
 		r, err := d.client.GetFileReport(hashes[0])
 		if err != nil {
 			return nil, fmt.Errorf("failed to get single report %s", err)
 		}
 		return []govt.FileReport{*r}, nil
 	default:
-		log.Printf("2")
 		r, err := d.client.GetFileReports(hashes)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get reports %s", err)
