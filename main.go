@@ -1,8 +1,8 @@
 package main
 
 import (
-	"bufio"
 	"context"
+	"flag"
 	"log"
 	"os"
 
@@ -10,6 +10,9 @@ import (
 )
 
 func main() {
+	addr := flag.String("addr", ":51289", "listen address")
+	flag.Parse()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -24,15 +27,8 @@ func main() {
 	det := NewDetector(client, notifier)
 	det.Start(ctx)
 
-	scanner := bufio.NewScanner(os.Stdin)
-	for scanner.Scan() {
-		s := scanner.Text()
-		if s != "" {
-			det.Add(s)
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
+	server := NewServer(*addr, det)
+	if err := server.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
 }
