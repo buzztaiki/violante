@@ -17,6 +17,9 @@ const (
 	responseCodeQueued = -2
 	// Scan finished, information embedded
 	responseCodeSuccess = 1
+	// Max number of files to getFileReports
+	// see https://www.virustotal.com/ja/documentation/public-api/#getting-file-scans
+	maxGetFileReports = 4
 )
 
 // Detector ...
@@ -57,16 +60,29 @@ func (d *Detector) Add(file string) {
 	d.remains = append(d.remains, file)
 }
 
-func (d *Detector) drainAll() []string {
+func (d *Detector) drain(n int) []string {
 	d.remainsMux.Lock()
 	defer d.remainsMux.Unlock()
-	rs := d.remains
-	d.remains = nil
+
+	l := len(d.remains)
+	if l == 0 {
+		return nil
+	}
+
+	if l < n {
+		n = l
+	}
+
+	rs := d.remains[0:n]
+	rest := d.remains[n:]
+	d.remains = make([]string, len(rest))
+	copy(d.remains, rest)
+
 	return rs
 }
 
 func (d *Detector) collectReports() ([]report, error) {
-	files := d.drainAll()
+	files := d.drain(maxGetFileReports)
 	hmap, hashes := d.collectHashes(files)
 	reports, err := d.getFileReports(hashes)
 	if err != nil {
