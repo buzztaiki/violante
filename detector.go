@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"sync"
@@ -26,6 +25,7 @@ type Detector struct {
 	notifier   Notifier
 	remains    []string
 	remainsMux sync.Mutex
+	ticker     *time.Ticker
 }
 
 type report struct {
@@ -35,12 +35,19 @@ type report struct {
 
 // NewDetector ...
 func NewDetector(client *govt.Client, notifier Notifier) *Detector {
-	return &Detector{client: client, notifier: notifier}
+	return &Detector{client: client, notifier: notifier, ticker: time.NewTicker(time.Minute / 4)}
 }
 
 // Start ...
-func (d *Detector) Start(ctx context.Context) {
-	go d.loop(ctx, time.NewTicker(time.Minute/4))
+func (d *Detector) Start() {
+	for range d.ticker.C {
+		d.detect()
+	}
+}
+
+// Shutdown ...
+func (d *Detector) Shutdown() {
+	d.ticker.Stop()
 }
 
 // Add ...
@@ -168,15 +175,9 @@ func (d *Detector) detect() {
 	}
 }
 
-func (d *Detector) loop(ctx context.Context, ticker *time.Ticker) {
-	for {
-		select {
-		case <-ctx.Done():
-			ticker.Stop()
-			return
-		case <-ticker.C:
-			log.Print("start detection...")
-			d.detect()
-		}
+func (d *Detector) loop(ticker *time.Ticker) {
+	for range ticker.C {
+		log.Print("start detection...")
+		d.detect()
 	}
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"log"
 	"os"
@@ -15,9 +14,6 @@ func main() {
 	flag.Parse()
 
 	if *serverMode {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
 		vtClient, err := govt.New(
 			govt.SetApikey(os.Getenv("VT_API_KEY")),
 		)
@@ -27,7 +23,8 @@ func main() {
 		notifier := &SlackNotifier{os.Getenv("SLACK_WEBHOOK_URL"), os.Getenv("SLACK_CHANNEL")}
 
 		det := NewDetector(vtClient, notifier)
-		det.Start(ctx)
+		go det.Start()
+		defer det.Shutdown()
 
 		server := NewServer(*addr, det)
 		if err := server.ListenAndServe(); err != nil {
