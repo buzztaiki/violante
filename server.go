@@ -13,10 +13,6 @@ type Server struct {
 	det  *Detector
 }
 
-type addRequest struct {
-	Files []string
-}
-
 // NewServer ...
 func NewServer(addr string, det *Detector) *Server {
 	return &Server{addr: addr, det: det}
@@ -51,7 +47,7 @@ func (s *Server) add(w http.ResponseWriter, req *http.Request) error {
 		return err
 	}
 
-	r := addRequest{}
+	r := AddRequest{}
 	if err := json.Unmarshal(body, &r); err != nil {
 		return err
 	}
