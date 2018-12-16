@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 
 	"github.com/williballenthin/govt"
@@ -46,14 +45,9 @@ func (n *SlackNotifier) send(a slackAttachment) error {
 	if resp.StatusCode < 200 || resp.StatusCode >= 400 {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			log.Printf("[error] %s", err)
 			return err
 		}
-		return fmt.Errorf("failed to send to slack %s (%s)", resp.Status, body)
-	}
-
-	if err != nil {
-		return err
+		return fmt.Errorf("failed to sent to slack %s (%s)", resp.Status, body)
 	}
 
 	return nil

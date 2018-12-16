@@ -187,6 +187,8 @@ func (d *Detector) detect() {
 	}
 
 	for _, r := range succeeded {
-		d.notifier.SendReport(r.file, r.r)
+		if err := d.notifier.SendReport(r.file, r.r); err != nil {
+			log.Printf("notify failed %s", err)
+		}
 	}
 }
