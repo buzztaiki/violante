@@ -3,11 +3,11 @@ package violante
 import (
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/williballenthin/govt"
-	"strings"
 )
 
 const (
@@ -37,8 +37,16 @@ type report struct {
 }
 
 // NewDetector ...
-func NewDetector(client *govt.Client, notifier Notifier) *Detector {
-	return &Detector{client: client, notifier: notifier, ticker: time.NewTicker(time.Minute / 4)}
+func NewDetector(vtAPIKey string, notifier Notifier) (*Detector, error) {
+	client, err := govt.New(
+		govt.SetApikey(vtAPIKey),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	d := &Detector{client: client, notifier: notifier, ticker: time.NewTicker(time.Minute / 4)}
+	return d, nil
 }
 
 // Start ...
