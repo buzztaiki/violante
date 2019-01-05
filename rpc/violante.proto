@@ -1,0 +1,13 @@
+syntax = "proto3";
+package rpc;
+
+service Violante {
+  rpc AddFiles(AddFilesRequest) returns (AddFilesResponse) {}
+}
+
+message AddFilesRequest {
+  repeated string files = 1;
+}
+
+message AddFilesResponse {
+}
