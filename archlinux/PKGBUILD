@@ -1,0 +1,32 @@
+# Maintainer: Taiki Sugawara <buzz.taiki@gmail.com>
+
+pkgname=violante-git
+pkgver=r25.290e557
+pkgrel=1
+pkgdesc="Virus scan server and cilent using VirusTotal"
+arch=('x86_64')
+url="https://github.com/buzztaiki/violante"
+license=('MIT')
+makedepends=('git' 'go')
+source=("$pkgname::git+file://$(pwd)/.."
+	'violante-server.service')
+sha256sums=('SKIP'
+            '50ad881c5bb0f32c83337dbe2f056995e849829d3adbc0414be38ab8366ed7ba')
+
+pkgver() {
+  cd "$srcdir/$pkgname"
+  printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+build() {
+  cd "$srcdir/$pkgname"
+  make
+}
+
+package() {
+  install -D -m755 -t "$pkgdir/usr/bin" "$srcdir/$pkgname/violante"
+  install -D -m755 -t "$pkgdir/usr/bin" "$srcdir/$pkgname/violante-server"
+  install -D -m644 -t "$pkgdir/usr/lib/systemd/system/" violante-server.service
+}
+
+# vim:set ts=2 sw=2 et:

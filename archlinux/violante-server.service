@@ -1,0 +1,9 @@
+[Unit]
+Description=Violante Server
+
+[Service]
+ExecStart=/usr/bin/violante-server
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
