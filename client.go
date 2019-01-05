@@ -1,10 +1,10 @@
 package violante
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"net/http"
+	"context"
+
+	"github.com/buzztaiki/violante/rpc"
+	"google.golang.org/grpc"
 )
 
 // Client ...
@@ -19,19 +19,16 @@ func NewClient(addr string) *Client {
 
 // Add ..
 func (c *Client) Add(files []string) error {
-	r := AddRequest{Files: files}
-	body, err := json.Marshal(&r)
+	conn, err := grpc.Dial(c.addr, grpc.WithInsecure())
 	if err != nil {
 		return err
 	}
+	rpcClient := rpc.NewViolanteClient(conn)
 
-	resp, err := http.Post("http://"+c.addr+"/", "application/json", bytes.NewBuffer(body))
-	if err != nil {
+	ctx := context.Background()
+	req := rpc.AddFilesRequest{Files: files}
+	if _, err := rpcClient.AddFiles(ctx, &req); err != nil {
 		return err
-	}
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 400 {
-		return fmt.Errorf("server error %s", resp.Status)
 	}
 
 	return nil

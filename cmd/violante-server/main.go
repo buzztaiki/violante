@@ -23,6 +23,7 @@ func main() {
 	defer det.Shutdown()
 
 	server := violante.NewServer(*addr, det)
+	log.Printf("server started on %s", *addr)
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
