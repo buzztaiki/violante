@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/buzztaiki/violante"
 	"github.com/williballenthin/govt"
 )
 
@@ -20,18 +21,18 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		notifier := &SlackNotifier{os.Getenv("SLACK_WEBHOOK_URL"), os.Getenv("SLACK_CHANNEL")}
+		notifier := violante.NewSlackNotifier(os.Getenv("SLACK_WEBHOOK_URL"), os.Getenv("SLACK_CHANNEL"))
 
-		det := NewDetector(vtClient, notifier)
+		det := violante.NewDetector(vtClient, notifier)
 		go det.Start()
 		defer det.Shutdown()
 
-		server := NewServer(*addr, det)
+		server := violante.NewServer(*addr, det)
 		if err := server.ListenAndServe(); err != nil {
 			log.Fatal(err)
 		}
 	} else {
-		if err := NewClient(*addr).Add(flag.Args()); err != nil {
+		if err := violante.NewClient(*addr).Add(flag.Args()); err != nil {
 			log.Fatal(err)
 		}
 	}

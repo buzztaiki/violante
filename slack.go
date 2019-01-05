@@ -1,4 +1,4 @@
-package main
+package violante
 
 import (
 	"bytes"
@@ -26,6 +26,11 @@ type slackMessage struct {
 type SlackNotifier struct {
 	webhookURL string
 	channel    string
+}
+
+// NewSlackNotifier ...
+func NewSlackNotifier(webhookURL, channel string) *SlackNotifier {
+	return &SlackNotifier{webhookURL, channel}
 }
 
 func (n *SlackNotifier) send(a slackAttachment) error {
